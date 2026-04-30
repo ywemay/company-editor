@@ -15,8 +15,9 @@ function setState(partial) {
     render();
 }
 
-function tryLoadLaunch(attempt) {
-    attempt = attempt || 1;
+function init() {
+    bindEvents();
+    // Check if launched with a file — if so, load its data
     fetch('/api/open').then(function(r) { return r.json(); }).then(function(data) {
         if (data.ok && data.data && data.data.company) {
             var d = data.data;
@@ -32,30 +33,14 @@ function tryLoadLaunch(attempt) {
     });
 }
 
-function init() {
-    bindEvents();
-    // Retry 3 times with delay — server may not be ready at first load
-    tryLoadLaunch(1);
-    setTimeout(function() { tryLoadLaunch(2); }, 500);
-    setTimeout(function() { tryLoadLaunch(3); }, 1500);
-}
-
 // ========== RENDER ==========
 
 function render() {
-    var startPage = document.getElementById('start-page');
-    var editorView = document.getElementById('editor-view');
     var isOpen = appState.company !== null;
-    console.log('RENDER: isOpen=' + isOpen + ', company=' + (appState.company ? appState.company.name : 'null'));
-    if (startPage) startPage.style.display = isOpen ? 'none' : 'flex';
-    if (editorView) editorView.style.display = isOpen ? 'flex' : 'none';
 
-    if (!isOpen) return;
-
-    if (document.getElementById('editor-icon'))
-        document.getElementById('editor-icon').textContent = '🏢';
+    // Update filename display
     if (document.getElementById('editor-filename'))
-        document.getElementById('editor-filename').textContent = appState.filename || 'Untitled';
+        document.getElementById('editor-filename').textContent = appState.filename || 'New Company';
     var badge = document.getElementById('editor-modified');
     if (badge) badge.style.display = appState.modified ? '' : 'none';
 
@@ -63,11 +48,10 @@ function render() {
 }
 
 function renderCompanyForm() {
-    var c = appState.company;
-    if (!c) {
-        document.getElementById('editor-content').innerHTML = '<div class="empty-tab">Loading...</div>';
-        return;
-    }
+    var c = appState.company || {
+        name: '', address: '', website: '', company_type: '',
+        emails: [], phones: [], contacts: []
+    };
 
     var html = '';
 
@@ -255,9 +239,7 @@ function bindEvents() {
             case 'open-file':
                 handleOpenFile();
                 break;
-            case 'create-new':
-                handleCreateNew();
-                break;
+
             case 'open-uri':
                 var uri = btn.dataset.uri;
                 if (uri) openSystem(uri);
@@ -304,12 +286,12 @@ function bindEvents() {
 
     // Start page buttons
     document.getElementById('btn-open-file').addEventListener('click', handleOpenFile);
-    document.getElementById('btn-create-new').addEventListener('click', handleCreateNew);
-    var debugBtn = document.getElementById('btn-debug-load');
-    if (debugBtn) debugBtn.addEventListener('click', handleDebugLoad);
+
 
     // Editor toolbar buttons
-    document.getElementById('btn-close-file').addEventListener('click', handleCloseFile);
+    document.getElementById('btn-open-file').addEventListener('click', handleOpenFile);
+    var newBtn = document.getElementById('btn-new-company');
+    if (newBtn) newBtn.addEventListener('click', handleNewCompany);
     document.getElementById('btn-save').addEventListener('click', handleSave);
     var addEmailBtn = document.getElementById('btn-add-email');
     if (addEmailBtn) addEmailBtn.addEventListener('click', handleAddEmail);
@@ -354,26 +336,6 @@ async function handleOpenFile() {
         }
     } catch (err) {
         _showAlert('Error selecting file: ' + err.message);
-    }
-}
-
-async function handleDebugLoad() {
-    // Force-load the launch file (debug button on start page)
-    try {
-        var result = await fetch('/api/open').then(function(r) { return r.json(); });
-        if (result.ok && result.data && result.data.company) {
-            var d = result.data;
-            appState.company = d.company;
-            appState.directory = d.directory;
-            appState.filename = d.filename;
-            appState.filepath = d.filepath;
-            appState.modified = false;
-            render();
-        } else {
-            _showAlert('No launch data found: ' + JSON.stringify(result));
-        }
-    } catch (err) {
-        _showAlert('Error: ' + err.message);
     }
 }
 
@@ -426,17 +388,42 @@ async function handleOpenPath(path) {
     }
 }
 
+function handleNewCompany() {
+    if (appState.modified) {
+        _showConfirmDialog('Discard unsaved changes?').then(function(confirmed) {
+            if (confirmed) doNewCompany();
+        });
+    } else {
+        doNewCompany();
+    }
+}
+
+function doNewCompany() {
+    appState.company = { name: '', address: '', website: '', company_type: '', emails: [], phones: [], contacts: [] };
+    appState.directory = '';
+    appState.filename = '';
+    appState.filepath = '';
+    appState.modified = false;
+    render();
+}
+
 function handleCloseFile() {
     if (appState.modified) {
         _showConfirmDialog('Discard unsaved changes?').then(function(confirmed) {
             if (confirmed) {
                 appState.company = null;
+                appState.directory = '';
+                appState.filename = '';
+                appState.filepath = '';
                 appState.modified = false;
                 render();
             }
         });
     } else {
         appState.company = null;
+        appState.directory = '';
+        appState.filename = '';
+        appState.filepath = '';
         appState.modified = false;
         render();
     }
@@ -444,6 +431,18 @@ function handleCloseFile() {
 
 async function handleSave() {
     gatherFormData();
+
+    // If no directory yet (new company), prompt for one
+    if (!appState.directory) {
+        try {
+            var browse = await api.browseDir();
+            if (!browse || !browse.path) return;
+            appState.directory = browse.path;
+        } catch (err) {
+            _showAlert('Error selecting directory: ' + err.message);
+            return;
+        }
+    }
 
     try {
         var result = await api.save(appState.directory, appState.company);
@@ -464,8 +463,6 @@ function gatherFormData() {
     c.company_type = document.getElementById('comp-type-select').value;
     c.address = document.getElementById('comp-address-input').value.trim();
     c.website = document.getElementById('comp-website-input').value.trim();
-    c.notes = document.getElementById('comp-notes-input').value.trim();
-
     var emailInputs = document.querySelectorAll('.comp-email-input');
     c.emails = Array.from(emailInputs).map(function(el) { return el.value.trim(); }).filter(Boolean);
 

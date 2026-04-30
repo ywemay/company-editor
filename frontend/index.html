@@ -9,29 +9,17 @@
 </head>
 <body>
 <div id="app">
-    <!-- Start page -->
-    <div id="start-page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:20px">
-        <div style="font-size:64px;opacity:0.4">🏢</div>
-        <h2 style="color:var(--text-secondary);font-weight:400">Open a .comp file to edit</h2>
-        <div style="display:flex;gap:12px">
-            <button class="btn btn-primary" id="btn-open-file" style="font-size:16px;padding:12px 28px">📂 Open File</button>
-            <button class="btn" id="btn-create-new" style="font-size:16px;padding:12px 28px">✨ Create New</button>
-            <button class="btn" id="btn-debug-load" style="font-size:16px;padding:12px 28px;border-color:var(--accent-red)">🔍 Debug Load</button>
-        </div>
-        <p style="margin-top:24px;font-size:12px;color:var(--text-muted)">
-            Company Editor v1.0.0 — Drag & drop .comp files onto this window
-        </p>
-    </div>
-
-    <!-- Editor view -->
-    <div id="editor-view" style="display:none;flex-direction:column;height:100vh">
+    <!-- Editor view (always visible, no start page) -->
+    <div id="editor-view" style="display:flex;flex-direction:column;height:100vh">
         <!-- Top bar -->
         <div id="editor-topbar" style="display:flex;align-items:center;padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);gap:10px">
             <span id="editor-icon" style="font-size:20px">🏢</span>
             <span id="editor-filename" style="font-weight:600;flex:1;font-size:14px"></span>
             <span id="editor-modified" style="font-size:11px;color:var(--accent-yellow);display:none">✏️ Modified</span>
-            <button class="btn btn-sm" id="btn-close-file" title="Close file">✕ Close</button>
-            <button class="btn btn-sm" id="btn-save">💾 Save</button>
+            <button class="btn btn-sm" id="btn-new-company" title="New company">📄 New</button>
+            <button class="btn btn-sm" id="btn-open-file" title="Open .comp file">📂 Open</button>
+            <div style="border-left:1px solid var(--border);height:24px"></div>
+            <button class="btn btn-sm btn-primary" id="btn-save">💾 Save</button>
             <div style="border-left:1px solid var(--border);height:24px"></div>
             <button class="btn btn-sm" id="btn-add-email" title="Add email">✉️ Add Email</button>
             <button class="btn btn-sm" id="btn-add-phone" title="Add phone">📞 Add Phone</button>
