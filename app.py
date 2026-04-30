@@ -99,8 +99,16 @@ if bottle is not None:
                 path = launch.get("path", "")
                 log(f"Launch file content: path={path}")
                 if path and os.path.isfile(path):
+                    log(f"Fallback: file exists at {path}")
                     directory = os.path.dirname(path)
-                    c = Company.load(directory)
+                    try:
+                        c = Company.load(directory)
+                        log(f"Fallback: Company loaded: {c.name}")
+                        d = c.to_dict()
+                        log(f"Fallback: to_dict OK, keys={list(d.keys())}")
+                    except Exception as e:
+                        log(f"Fallback ERROR: {e}")
+                        raise
                     return json_ok({
                         "ok": True,
                         "data": {
