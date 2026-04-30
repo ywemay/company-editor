@@ -184,6 +184,16 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Contact links */
+a.contact-link {
+    color: var(--accent);
+    text-decoration: none;
+}
+a.contact-link:hover {
+    text-decoration: underline;
+    color: var(--accent-hover);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }

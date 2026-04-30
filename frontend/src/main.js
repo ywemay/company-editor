@@ -65,7 +65,7 @@ function renderCompanyForm() {
     html += '<div class="section-header">🏢 Company Information</div>';
     html += '<div class="form-row">';
     html += '<div class="form-group" style="flex:2"><label>Company Name</label><input type="text" id="comp-name-input" value="' + escapeHtml(c.name) + '" /></div>';
-    html += '<div class="form-group" style="flex:1"><label>Website</label><input type="text" id="comp-website-input" value="' + escapeHtml(c.website || '') + '" /></div>';
+    html += '<div class="form-group" style="flex:1"><label>Website</label><div style="display:flex;gap:4px"><input type="text" id="comp-website-input" value="' + escapeHtml(c.website || '') + '" style="flex:1" />' + (c.website ? '<a href="' + escapeHtml(c.website) + '" target="_blank" class="btn btn-xs" title="Open in browser" style="text-decoration:none;font-size:12px;display:inline-flex;align-items:center">🌐</a>' : '') + '</div></div>';
     html += '</div>';
 
     html += '<div class="form-row">';
@@ -87,24 +87,26 @@ function renderCompanyForm() {
     html += '<div id="comp-emails-list">';
     if (c.emails && c.emails.length > 0) {
         c.emails.forEach(function(email, idx) {
-            html += '<div class="contact-field-row"><input type="text" class="comp-email-input" value="' + escapeHtml(email) + '" data-idx="' + idx + '" placeholder="email@example.com" /><button class="btn btn-xs btn-danger" data-action="remove-email" data-idx="' + idx + '">✕</button></div>';
+            var mailtoLink = email ? 'href="mailto:' + escapeHtml(email) + '"' : '';
+            html += '<div class="contact-field-row"><input type="text" class="comp-email-input" value="' + escapeHtml(email) + '" data-idx="' + idx + '" placeholder="email@example.com" /><a ' + mailtoLink + ' class="btn btn-xs" title="Send email" style="text-decoration:none;font-size:12px;display:inline-flex;align-items:center">✉️</a><button class="btn btn-xs btn-danger" data-action="remove-email" data-idx="' + idx + '">✕</button></div>';
         });
     } else {
         html += '<div class="contact-field-row"><input type="text" class="comp-email-input" data-idx="0" placeholder="email@example.com" /></div>';
     }
     html += '</div>';
-    html += '<button class="btn btn-sm" data-action="add-email" style="margin-top:4px;font-size:12px">➕ Add Email</button></div>';
+    html += '</div>';
     html += '<div class="form-group" style="flex:1"><label>Phones</label>';
     html += '<div id="comp-phones-list">';
     if (c.phones && c.phones.length > 0) {
         c.phones.forEach(function(phone, idx) {
-            html += '<div class="contact-field-row"><input type="text" class="comp-phone-input" value="' + escapeHtml(phone) + '" data-idx="' + idx + '" placeholder="+123456789" /><button class="btn btn-xs btn-danger" data-action="remove-phone" data-idx="' + idx + '">✕</button></div>';
+            var telHref = phone ? 'href="tel:' + escapeHtml(phone.replace(/[^+\d]/g, '')) + '"' : '';
+            html += '<div class="contact-field-row"><input type="text" class="comp-phone-input" value="' + escapeHtml(phone) + '" data-idx="' + idx + '" placeholder="+123456789" /><a ' + telHref + ' class="btn btn-xs" title="Call" style="text-decoration:none;font-size:12px;display:inline-flex;align-items:center">📞</a><button class="btn btn-xs btn-danger" data-action="remove-phone" data-idx="' + idx + '">✕</button></div>';
         });
     } else {
         html += '<div class="contact-field-row"><input type="text" class="comp-phone-input" data-idx="0" placeholder="+123456789" /></div>';
     }
     html += '</div>';
-    html += '<button class="btn btn-sm" data-action="add-phone" style="margin-top:4px;font-size:12px">➕ Add Phone</button></div>';
+    html += '</div>';
     html += '</div>';
 
     // Notes
@@ -124,8 +126,8 @@ function renderCompanyForm() {
             html += '<button class="btn btn-xs" data-action="edit-contact" data-idx="' + idx + '">✏️</button>';
             html += '<button class="btn btn-xs btn-danger" data-action="delete-contact" data-idx="' + idx + '">🗑</button>';
             html += '</div></div>';
-            if (contact.tel) html += '<div class="contact-detail">📞 ' + escapeHtml(contact.tel) + '</div>';
-            if (contact.email) html += '<div class="contact-detail">✉️ ' + escapeHtml(contact.email) + '</div>';
+            if (contact.tel) html += '<div class="contact-detail">📞 <a href="tel:' + escapeHtml(contact.tel.replace(/[^+\d]/g, '')) + '" class="contact-link">' + escapeHtml(contact.tel) + '</a></div>';
+            if (contact.email) html += '<div class="contact-detail">✉️ <a href="mailto:' + escapeHtml(contact.email) + '" class="contact-link">' + escapeHtml(contact.email) + '</a></div>';
             if (contact.org) html += '<div class="contact-detail">🏢 ' + escapeHtml(contact.org) + '</div>';
             if (contact.role) html += '<div class="contact-detail">🎯 ' + escapeHtml(contact.role) + '</div>';
             html += '</div>';
@@ -135,7 +137,7 @@ function renderCompanyForm() {
         html += '<div class="empty-tab" style="padding:12px">No contacts yet.</div>';
     }
 
-    html += '<button class="btn btn-primary" id="add-contact-btn" style="margin-top:8px">➕ Add Contact</button>';
+
 
     // Contact editor form
     html += '<div id="contact-editor" style="display:none;margin-top:16px;padding:16px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius)">';
@@ -161,7 +163,7 @@ function renderCompanyForm() {
     document.getElementById('editor-content').innerHTML = html;
 
     // Wire events
-    document.getElementById('add-contact-btn').addEventListener('click', function() { showContactForm(-1); });
+
     document.getElementById('contact-save-btn').addEventListener('click', handleContactSave);
     document.getElementById('contact-cancel-btn').addEventListener('click', hideContactForm);
 }
@@ -295,6 +297,12 @@ function bindEvents() {
     // Editor toolbar buttons
     document.getElementById('btn-close-file').addEventListener('click', handleCloseFile);
     document.getElementById('btn-save').addEventListener('click', handleSave);
+    var addEmailBtn = document.getElementById('btn-add-email');
+    if (addEmailBtn) addEmailBtn.addEventListener('click', handleAddEmail);
+    var addPhoneBtn = document.getElementById('btn-add-phone');
+    if (addPhoneBtn) addPhoneBtn.addEventListener('click', handleAddPhone);
+    var addContactBtn = document.getElementById('btn-add-contact');
+    if (addContactBtn) addContactBtn.addEventListener('click', function() { showContactForm(-1); });
 
     // Input change marks modified
     body.addEventListener('input', function(e) {
