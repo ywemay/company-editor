@@ -73,7 +73,14 @@ if bottle is not None:
             if path and os.path.isfile(path):
                 log(f"Using launch query param: {path}")
                 directory = os.path.dirname(path)
-                c = Company.load(directory)
+                try:
+                    c = Company.load(directory)
+                    log(f"Company loaded: name={c.name}, file={c.filename}")
+                    d = c.to_dict()
+                    log(f"to_dict succeeded, keys={list(d.keys())}")
+                except Exception as e:
+                    log(f"ERROR loading company: {e}")
+                    raise
                 return json_ok({
                     "ok": True,
                     "data": {
