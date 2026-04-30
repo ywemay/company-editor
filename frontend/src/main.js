@@ -17,8 +17,9 @@ function setState(partial) {
 
 function init() {
     bindEvents();
-    // Check if launched with a file argument
-    fetch('/api/open').then(function(r) { return r.json(); }).then(function(data) {
+    // Check if launched with a file argument (via URL query param or launch file)
+    var launchParam = window.location.search ? window.location.search.substring(1).split('&').reduce(function(acc, p) { var kv = p.split('='); acc[kv[0]] = decodeURIComponent(kv[1] || ''); return acc; }, {}).launch || '' : '';
+    fetch('/api/open' + (launchParam ? '?launch=' + encodeURIComponent(launchParam) : '')).then(function(r) { return r.json(); }).then(function(data) {
         if (data.ok && data.data && data.data.company) {
             var d = data.data;
             appState.company = d.company;

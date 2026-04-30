@@ -68,31 +68,44 @@ if bottle is not None:
     def api_open_launch():
         """GET: Load the company from the launch file (set when app launched with a file arg)."""
         try:
-            info_path = os.path.join(_this_dir, "data", "launch_file.json")
-            log(f"Reading launch file from: {info_path}")
-            if not os.path.isfile(info_path):
-                log("No launch file found")
-                return json_ok({"ok": False})
-            with open(info_path, "r") as f:
-                launch = json.load(f)
-            path = launch.get("path", "")
-            log(f"Launch file content: path={path}")
-            if not path or not os.path.isfile(path):
-                log(f"File not found at path: {path}")
-                return json_ok({"ok": False})
-            directory = os.path.dirname(path)
-            log(f"Loading company from directory: {directory}")
-            c = Company.load(directory)
-            return json_ok({
-                "ok": True,
-                "data": {
-                    "company": c.to_dict(),
-                    "filepath": path,
-                    "filename": c.filename,
-                    "directory": directory,
-                }
-            })
+            # Check query param (?launch=/path/to/file.comp)
+            path = request.query.get("launch", "")
+            if path and os.path.isfile(path):
+                log(f"Using launch query param: {path}")
+                directory = os.path.dirname(path)
+                c = Company.load(directory)
+                return json_ok({
+                    "ok": True,
+                    "data": {
+                        "company": c.to_dict(),
+                        "filepath": path,
+                        "filename": c.filename,
+                        "directory": directory,
+                    }
+                })
+            # Fallback: read fixed launch file
+            info_path = os.path.join(os.path.expanduser("~/.local/share/company-editor"), "launch_file.json")
+            log(f"Checking launch file at: {info_path}")
+            if os.path.isfile(info_path):
+                with open(info_path, "r") as f:
+                    launch = json.load(f)
+                path = launch.get("path", "")
+                log(f"Launch file content: path={path}")
+                if path and os.path.isfile(path):
+                    directory = os.path.dirname(path)
+                    c = Company.load(directory)
+                    return json_ok({
+                        "ok": True,
+                        "data": {
+                            "company": c.to_dict(),
+                            "filepath": path,
+                            "filename": c.filename,
+                            "directory": directory,
+                        }
+                    })
+            return json_ok({"ok": False})
         except Exception as e:
+            log(f"Error in api_open_launch: {e}")
             return json_err(str(e))
 
     # ── Open a .comp file (POST with path) ──
@@ -235,22 +248,26 @@ def main():
         if arg_path.endswith(".comp") and os.path.isfile(arg_path):
             file_to_open = os.path.realpath(arg_path)
 
-    # Write launch file BEFORE creating the window — frontend checks this on load
+    # Write launch file to a fixed absolute path (not relative to _this_dir — PyInstaller temp bug)
     if file_to_open:
-        info_path = os.path.join(_this_dir, "data", "launch_file.json")
+        info_path = os.path.join(os.path.expanduser("~/.local/share/company-editor"), "launch_file.json")
         os.makedirs(os.path.dirname(info_path), exist_ok=True)
         with open(info_path, "w") as f:
             json.dump({"path": file_to_open}, f)
-        log(f"Launch file written: {file_to_open}")
+        log(f"Launch file written to {info_path}")
     else:
         log("No file argument — start page will be shown")
 
     t = threading.Thread(target=start_server, daemon=True)
     t.start()
 
+    launch_url = "http://127.0.0.1:18092"
+    if file_to_open:
+        launch_url += "?launch=" + file_to_open
+
     webview.create_window(
         "Company Editor",
-        "http://127.0.0.1:18092",
+        launch_url,
         width=900,
         height=700,
         resizable=True,
