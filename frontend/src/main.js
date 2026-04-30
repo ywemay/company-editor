@@ -8,6 +8,11 @@ var appState = {
     filepath: '',
 };
 
+function debugLog(msg) {
+    var el = document.getElementById('debug-log');
+    if (el) el.textContent = new Date().toLocaleTimeString() + ' ' + msg + '\n' + el.textContent;
+}
+
 function getState() { return appState; }
 
 function setState(partial) {
@@ -19,6 +24,7 @@ function init() {
     bindEvents();
     // Check if launched with a file — if so, load its data
     fetch('/api/open').then(function(r) { return r.json(); }).then(function(data) {
+        debugLog('API response: ' + (data.ok ? 'OK' : 'FAIL') + ' has_company=' + !!(data.data && data.data.company));
         if (data.ok && data.data && data.data.company) {
             var d = data.data;
             appState.company = d.company;
@@ -27,8 +33,10 @@ function init() {
             appState.filepath = d.filepath;
             appState.modified = false;
         }
-        render();
+        debugLog('Calling render(), company=' + (appState.company ? appState.company.name : 'null'));
+    render();
     }).catch(function() {
+        debugLog('fetch /api/open failed');
         render();
     });
 }
@@ -36,8 +44,7 @@ function init() {
 // ========== RENDER ==========
 
 function render() {
-    var isOpen = appState.company !== null;
-
+    debugLog('render() company=' + (appState.company ? appState.company.name : 'null'));
     // Update filename display
     if (document.getElementById('editor-filename'))
         document.getElementById('editor-filename').textContent = appState.filename || 'New Company';
