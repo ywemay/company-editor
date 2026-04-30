@@ -63,14 +63,19 @@ if bottle is not None:
         """GET: Load the company from the launch file (set when app launched with a file arg)."""
         try:
             info_path = os.path.join(_this_dir, "data", "launch_file.json")
+            log(f"Reading launch file from: {info_path}")
             if not os.path.isfile(info_path):
+                log("No launch file found")
                 return json_ok({"ok": False})
             with open(info_path, "r") as f:
                 launch = json.load(f)
             path = launch.get("path", "")
+            log(f"Launch file content: path={path}")
             if not path or not os.path.isfile(path):
+                log(f"File not found at path: {path}")
                 return json_ok({"ok": False})
             directory = os.path.dirname(path)
+            log(f"Loading company from directory: {directory}")
             c = Company.load(directory)
             return json_ok({
                 "ok": True,
@@ -230,6 +235,9 @@ def main():
         os.makedirs(os.path.dirname(info_path), exist_ok=True)
         with open(info_path, "w") as f:
             json.dump({"path": file_to_open}, f)
+        log(f"Launch file written: {file_to_open}")
+    else:
+        log("No file argument — start page will be shown")
 
     t = threading.Thread(target=start_server, daemon=True)
     t.start()
