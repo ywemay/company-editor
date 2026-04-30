@@ -128,7 +128,7 @@ if bottle is not None:
         try:
             file_types = ("Company files (*.comp)",)
             result = webview.windows[0].create_file_dialog(
-                webview.OPEN_DIALOG, allow_multiple=False,
+                webview.FileDialog.OPEN, allow_multiple=False,
                 file_types=file_types
             )
             path = result[0] if result else ""

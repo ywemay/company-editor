@@ -17,15 +17,21 @@ function setState(partial) {
 
 function init() {
     bindEvents();
-    // Check for launch file
-    fetch('/api/health').then(function(r) { return r.json(); }).then(function(d) {
-        if (d.ok) {
-            return fetch('/api/open-file');
+    // Check if launched with a file argument
+    fetch('/api/open').then(function(r) { return r.json(); }).then(function(data) {
+        if (data.ok && data.data && data.data.company) {
+            var d = data.data;
+            appState.company = d.company;
+            appState.directory = d.directory;
+            appState.filename = d.filename;
+            appState.filepath = d.filepath;
+            appState.modified = false;
+            render();
         }
-    }).then(function() {
-        // Check if we have a launch file
-        fetch('/api/open').catch(function() {});
-    }).catch(function() {});
+    }).catch(function() {
+        // No launch file — show start page
+        render();
+    });
 }
 
 // ========== RENDER ==========
@@ -101,7 +107,7 @@ function renderCompanyForm() {
     html += '<button class="btn btn-sm" data-action="add-phone" style="margin-top:4px;font-size:12px">➕ Add Phone</button></div>';
     html += '</div>';
 
-    // Notes (extra field not in Company model — store as note in company dict)
+    // Notes
     html += '<div class="form-group"><label>Notes</label>';
     html += '<textarea id="comp-notes-input" rows="2" style="width:100%;padding:6px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);resize:vertical">' + escapeHtml(c.notes || '') + '</textarea>';
     html += '</div>';
@@ -179,7 +185,7 @@ function showContactForm(idx) {
         if (contact) {
             fields.forEach(function(f) {
                 var el = document.getElementById('contact-' + f + '-input');
-                if (el && contact[f]) el.value = String(contact[f]);
+                if (el && contact[f] !== undefined) el.value = String(contact[f]);
             });
         }
     }
@@ -239,6 +245,9 @@ function bindEvents() {
             case 'open-file':
                 handleOpenFile();
                 break;
+            case 'create-new':
+                handleCreateNew();
+                break;
             case 'add-email':
                 handleAddEmail();
                 break;
@@ -279,8 +288,11 @@ function bindEvents() {
         }
     });
 
-    document.getElementById('btn-open-file').addEventListener('click', handleOpenFileFromDialog);
-    document.getElementById('btn-open-file-dialog').addEventListener('click', handleOpenFileFromDialog);
+    // Start page buttons
+    document.getElementById('btn-open-file').addEventListener('click', handleOpenFile);
+    document.getElementById('btn-create-new').addEventListener('click', handleCreateNew);
+
+    // Editor toolbar buttons
     document.getElementById('btn-close-file').addEventListener('click', handleCloseFile);
     document.getElementById('btn-save').addEventListener('click', handleSave);
 
@@ -309,14 +321,37 @@ function bindEvents() {
 // ========== HANDLERS ==========
 
 async function handleOpenFile() {
-    var result = await api.openFile();
-    if (result && result.path) {
-        await handleOpenPath(result.path);
+    try {
+        var result = await api.openFileDialog();
+        if (result && result.path) {
+            await handleOpenPath(result.path);
+        }
+    } catch (err) {
+        _showAlert('Error selecting file: ' + err.message);
     }
 }
 
-async function handleOpenFileFromDialog() {
-    await handleOpenFile();
+async function handleCreateNew() {
+    // Simply ask for a directory and create a new blank company there
+    var dir = prompt('Enter the directory path where the .comp file should be created:');
+    if (!dir || !dir.trim()) return;
+    dir = dir.trim();
+    try {
+        var blank = {
+            name: '', address: '', website: '', company_type: '',
+            emails: [], phones: [], contacts: [], notes: ''
+        };
+        var result = await api.save(dir, blank);
+        appState.company = result.company;
+        appState.directory = result.directory;
+        appState.filename = result.filename;
+        appState.filepath = result.filepath;
+        appState.modified = false;
+        render();
+        _showAlert('✅ New company file created: ' + result.filename);
+    } catch (err) {
+        _showAlert('❌ Error creating company: ' + err.message);
+    }
 }
 
 async function handleOpenPath(path) {
@@ -416,8 +451,7 @@ function escapeHtml(str) {
 
 function _showConfirmDialog(msg) {
     return new Promise(function(resolve) {
-        var result = window.confirm(msg);
-        resolve(result);
+        resolve(window.confirm(msg));
     });
 }
 
