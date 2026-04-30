@@ -70,12 +70,12 @@ function renderCompanyForm() {
 
     html += '<div class="form-row">';
     html += '<div class="form-group" style="flex:1"><label>Company Type</label>';
-    html += '<select id="comp-type-select" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);font-size:13px">';
+    html += '<select id="comp-type-select" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);font-size:13px;appearance:none;-webkit-appearance:none">';
     var types = ['', 'customer', 'supplier', 'shipping_company', 'bank', 'post_office', 'other'];
     var currentType = c.company_type || '';
     types.forEach(function(t) {
         var label = t ? t.replace(/_/g, ' ').replace(/\b\w/g, function(s) { return s.toUpperCase(); }) : '— Select Type —';
-        html += '<option value="' + escapeHtml(t) + '"' + (currentType === t ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
+        html += '<option value="' + escapeHtml(t) + '"' + (currentType === t ? ' selected' : '') + ' style="background:var(--bg-surface);color:var(--text-primary)">' + escapeHtml(label) + '</option>';
     });
     html += '</select></div>';
     html += '<div class="form-group" style="flex:2"><label>Address</label><input type="text" id="comp-address-input" value="' + escapeHtml(c.address || '') + '" /></div>';
