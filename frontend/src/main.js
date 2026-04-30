@@ -65,7 +65,7 @@ function renderCompanyForm() {
     html += '<div class="section-header">🏢 Company Information</div>';
     html += '<div class="form-row">';
     html += '<div class="form-group" style="flex:2"><label>Company Name</label><input type="text" id="comp-name-input" value="' + escapeHtml(c.name) + '" /></div>';
-    html += '<div class="form-group" style="flex:1"><label>Website</label><div style="display:flex;gap:4px"><input type="text" id="comp-website-input" value="' + escapeHtml(c.website || '') + '" style="flex:1" />' + (c.website ? '<a href="' + escapeHtml(c.website) + '" target="_blank" class="btn btn-xs" title="Open in browser" style="text-decoration:none;font-size:12px;display:inline-flex;align-items:center">🌐</a>' : '') + '</div></div>';
+    html += '<div class="form-group" style="flex:1"><label>Website</label><div style="display:flex;gap:4px"><input type="text" id="comp-website-input" value="' + escapeHtml(c.website || '') + '" style="flex:1" />' + (c.website ? '<button class="btn btn-xs" data-action="open-uri" data-uri="' + escapeHtml(c.website) + '" title="Open in browser" style="font-size:12px">🌐</button>' : '') + '</div></div>';
     html += '</div>';
 
     html += '<div class="form-row">';
@@ -87,8 +87,7 @@ function renderCompanyForm() {
     html += '<div id="comp-emails-list">';
     if (c.emails && c.emails.length > 0) {
         c.emails.forEach(function(email, idx) {
-            var mailtoLink = email ? 'href="mailto:' + escapeHtml(email) + '"' : '';
-            html += '<div class="contact-field-row"><input type="text" class="comp-email-input" value="' + escapeHtml(email) + '" data-idx="' + idx + '" placeholder="email@example.com" /><a ' + mailtoLink + ' class="btn btn-xs" title="Send email" style="text-decoration:none;font-size:12px;display:inline-flex;align-items:center">✉️</a><button class="btn btn-xs btn-danger" data-action="remove-email" data-idx="' + idx + '">✕</button></div>';
+            html += '<div class="contact-field-row"><input type="text" class="comp-email-input" value="' + escapeHtml(email) + '" data-idx="' + idx + '" placeholder="email@example.com" /><button class="btn btn-xs" data-action="open-uri" data-uri="mailto:' + escapeHtml(email) + '" title="Send email" style="font-size:12px">✉️</button><button class="btn btn-xs btn-danger" data-action="remove-email" data-idx="' + idx + '">✕</button></div>';
         });
     } else {
         html += '<div class="contact-field-row"><input type="text" class="comp-email-input" data-idx="0" placeholder="email@example.com" /></div>';
@@ -99,8 +98,7 @@ function renderCompanyForm() {
     html += '<div id="comp-phones-list">';
     if (c.phones && c.phones.length > 0) {
         c.phones.forEach(function(phone, idx) {
-            var telHref = phone ? 'href="tel:' + escapeHtml(phone.replace(/[^+\d]/g, '')) + '"' : '';
-            html += '<div class="contact-field-row"><input type="text" class="comp-phone-input" value="' + escapeHtml(phone) + '" data-idx="' + idx + '" placeholder="+123456789" /><a ' + telHref + ' class="btn btn-xs" title="Call" style="text-decoration:none;font-size:12px;display:inline-flex;align-items:center">📞</a><button class="btn btn-xs btn-danger" data-action="remove-phone" data-idx="' + idx + '">✕</button></div>';
+            html += '<div class="contact-field-row"><input type="text" class="comp-phone-input" value="' + escapeHtml(phone) + '" data-idx="' + idx + '" placeholder="+123456789" /><button class="btn btn-xs" data-action="open-uri" data-uri="tel:' + escapeHtml(phone.replace(/[^+\d]/g, '')) + '" title="Call" style="font-size:12px">📞</button><button class="btn btn-xs btn-danger" data-action="remove-phone" data-idx="' + idx + '">✕</button></div>';
         });
     } else {
         html += '<div class="contact-field-row"><input type="text" class="comp-phone-input" data-idx="0" placeholder="+123456789" /></div>';
@@ -126,8 +124,8 @@ function renderCompanyForm() {
             html += '<button class="btn btn-xs" data-action="edit-contact" data-idx="' + idx + '">✏️</button>';
             html += '<button class="btn btn-xs btn-danger" data-action="delete-contact" data-idx="' + idx + '">🗑</button>';
             html += '</div></div>';
-            if (contact.tel) html += '<div class="contact-detail">📞 <a href="tel:' + escapeHtml(contact.tel.replace(/[^+\d]/g, '')) + '" class="contact-link">' + escapeHtml(contact.tel) + '</a></div>';
-            if (contact.email) html += '<div class="contact-detail">✉️ <a href="mailto:' + escapeHtml(contact.email) + '" class="contact-link">' + escapeHtml(contact.email) + '</a></div>';
+            if (contact.tel) html += '<div class="contact-detail">📞 <span class="contact-link" data-action="open-uri" data-uri="tel:' + escapeHtml(contact.tel.replace(/[^+\d]/g, '')) + '" style="cursor:pointer">' + escapeHtml(contact.tel) + '</span></div>';
+            if (contact.email) html += '<div class="contact-detail">✉️ <span class="contact-link" data-action="open-uri" data-uri="mailto:' + escapeHtml(contact.email) + '" style="cursor:pointer">' + escapeHtml(contact.email) + '</span></div>';
             if (contact.org) html += '<div class="contact-detail">🏢 ' + escapeHtml(contact.org) + '</div>';
             if (contact.role) html += '<div class="contact-detail">🎯 ' + escapeHtml(contact.role) + '</div>';
             html += '</div>';
@@ -249,6 +247,10 @@ function bindEvents() {
                 break;
             case 'create-new':
                 handleCreateNew();
+                break;
+            case 'open-uri':
+                var uri = btn.dataset.uri;
+                if (uri) openSystem(uri);
                 break;
             case 'add-email':
                 handleAddEmail();

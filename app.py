@@ -136,6 +136,28 @@ if bottle is not None:
         except Exception as e:
             return json_err(str(e))
 
+    # ── Open URI with system handler ──
+    @bottle_app.get("/api/open-system")
+    def api_open_system():
+        """Open a URI (mailto:, tel:, https:) with the system default handler."""
+        uri = request.query.get("uri", "")
+        if not uri:
+            return json_err("uri is required")
+        try:
+            import subprocess
+            import platform
+            system = platform.system()
+            if system == "Darwin":
+                subprocess.Popen(["open", uri])
+            elif system == "Windows":
+                import webbrowser
+                webbrowser.open(uri)
+            else:
+                subprocess.Popen(["xdg-open", uri])
+            return json_ok({"opened": True})
+        except Exception as e:
+            return json_err(str(e))
+
     # ── CORS ──
     @bottle_app.hook("after_request")
     def enable_cors():

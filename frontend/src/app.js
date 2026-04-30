@@ -11,6 +11,12 @@ async function apiCall(method, url, body) {
     return data.data;
 }
 
+function openSystem(uri) {
+    fetch('/api/open-system?uri=' + encodeURIComponent(uri)).catch(function(e) {
+        console.error('Failed to open URI:', e);
+    });
+}
+
 const api = {
     open:           (p) => apiCall('POST', '/api/open', { path: p }),
     save:           (dir, company) => apiCall('POST', '/api/save', { directory: dir, company }),
