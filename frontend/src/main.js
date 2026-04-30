@@ -15,9 +15,8 @@ function setState(partial) {
     render();
 }
 
-function init() {
-    bindEvents();
-    // Check if a launch file was set before the WebView started
+function tryLoadLaunch(attempt) {
+    attempt = attempt || 1;
     fetch('/api/open').then(function(r) { return r.json(); }).then(function(data) {
         if (data.ok && data.data && data.data.company) {
             var d = data.data;
@@ -26,13 +25,19 @@ function init() {
             appState.filename = d.filename;
             appState.filepath = d.filepath;
             appState.modified = false;
-            render();
-        } else {
-            render();
         }
+        render();
     }).catch(function() {
         render();
     });
+}
+
+function init() {
+    bindEvents();
+    // Retry 3 times with delay — server may not be ready at first load
+    tryLoadLaunch(1);
+    setTimeout(function() { tryLoadLaunch(2); }, 500);
+    setTimeout(function() { tryLoadLaunch(3); }, 1500);
 }
 
 // ========== RENDER ==========
@@ -41,14 +46,18 @@ function render() {
     var startPage = document.getElementById('start-page');
     var editorView = document.getElementById('editor-view');
     var isOpen = appState.company !== null;
-    startPage.style.display = isOpen ? 'none' : 'flex';
-    editorView.style.display = isOpen ? 'flex' : 'none';
+    console.log('RENDER: isOpen=' + isOpen + ', company=' + (appState.company ? appState.company.name : 'null'));
+    if (startPage) startPage.style.display = isOpen ? 'none' : 'flex';
+    if (editorView) editorView.style.display = isOpen ? 'flex' : 'none';
 
     if (!isOpen) return;
 
-    document.getElementById('editor-icon').textContent = '🏢';
-    document.getElementById('editor-filename').textContent = appState.filename || 'Untitled';
-    document.getElementById('editor-modified').style.display = appState.modified ? '' : 'none';
+    if (document.getElementById('editor-icon'))
+        document.getElementById('editor-icon').textContent = '🏢';
+    if (document.getElementById('editor-filename'))
+        document.getElementById('editor-filename').textContent = appState.filename || 'Untitled';
+    var badge = document.getElementById('editor-modified');
+    if (badge) badge.style.display = appState.modified ? '' : 'none';
 
     renderCompanyForm();
 }
