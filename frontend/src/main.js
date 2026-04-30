@@ -356,9 +356,15 @@ async function handleCreateNew() {
     }
     var dir = result && result.path ? result.path : '';
     if (!dir) return;
+
+    // Ask for company name (which becomes the base file name)
+    var companyName = prompt('Enter company name:', '');
+    if (companyName === null) return; // cancelled
+    companyName = (companyName || '').trim();
+
     try {
         var blank = {
-            name: '', address: '', website: '', company_type: '',
+            name: companyName, address: '', website: '', company_type: '',
             emails: [], phones: [], contacts: [], notes: ''
         };
         var result = await api.save(dir, blank);
