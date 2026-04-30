@@ -17,22 +17,54 @@ function setState(partial) {
 
 function init() {
     bindEvents();
-    // Check if launched with a file argument (via URL query param or launch file)
-    var launchParam = window.location.search ? window.location.search.substring(1).split('&').reduce(function(acc, p) { var kv = p.split('='); acc[kv[0]] = decodeURIComponent(kv[1] || ''); return acc; }, {}).launch || '' : '';
-    fetch('/api/open' + (launchParam ? '?launch=' + encodeURIComponent(launchParam) : '')).then(function(r) { return r.json(); }).then(function(data) {
-        if (data.ok && data.data && data.data.company) {
-            var d = data.data;
-            appState.company = d.company;
-            appState.directory = d.directory;
-            appState.filename = d.filename;
-            appState.filepath = d.filepath;
-            appState.modified = false;
+    // Check if launched with a file argument — try both URL query param and launch file
+    function tryLoadLaunchFile() {
+        fetch('/api/open').then(function(r) { return r.json(); }).then(function(data) {
+            console.log('INIT: /api/open (no param) response:', JSON.stringify(data));
+            if (data.ok && data.data && data.data.company) {
+                var d = data.data;
+                appState.company = d.company;
+                appState.directory = d.directory;
+                appState.filename = d.filename;
+                appState.filepath = d.filepath;
+                appState.modified = false;
+                render();
+            } else {
+                console.log('INIT: No company data, showing start page');
+                render();
+            }
+        }).catch(function(err) {
+            console.log('INIT: fetch failed, showing start page, error=', err);
             render();
-        }
-    }).catch(function() {
-        // No launch file — show start page
-        render();
-    });
+        });
+    }
+
+    var launchParam = window.location.search ? window.location.search.substring(1).split('&').reduce(function(acc, p) { var kv = p.split('='); acc[kv[0]] = decodeURIComponent(kv[1] || ''); return acc; }, {}).launch || '' : '';
+    if (launchParam) {
+        console.log('INIT: Found launch param:', launchParam);
+        fetch('/api/open?launch=' + encodeURIComponent(launchParam)).then(function(r) { return r.json(); }).then(function(data) {
+            console.log('INIT: /api/open (with param) response:', JSON.stringify(data));
+            if (data.ok && data.data && data.data.company) {
+                var d = data.data;
+                appState.company = d.company;
+                appState.directory = d.directory;
+                appState.filename = d.filename;
+                appState.filepath = d.filepath;
+                appState.modified = false;
+                render();
+            } else {
+                // Fallback: try without param (launch file)
+                console.log('INIT: Query param failed, trying launch file');
+                tryLoadLaunchFile();
+            }
+        }).catch(function() {
+            console.log('INIT: Query param fetch failed, trying launch file');
+            tryLoadLaunchFile();
+        });
+    } else {
+        // No query param, try launch file directly
+        tryLoadLaunchFile();
+    }
 }
 
 // ========== RENDER ==========
