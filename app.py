@@ -20,8 +20,14 @@ sys.path.insert(0, _this_dir)
 from prodlib.company import Company, Contact
 
 
+_log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "company-editor.log")
 def log(msg):
     print(f"[company-editor] {msg}", file=sys.stderr, flush=True)
+    try:
+        with open(_log_path, "a") as f:
+            f.write(f"{msg}\n")
+    except Exception:
+        pass
 
 
 def log_error(msg):
