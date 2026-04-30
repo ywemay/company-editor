@@ -58,7 +58,33 @@ if bottle is not None:
     def api_health():
         return json_ok({"status": "ok", "version": "1.0.0"})
 
-    # ── Open a .comp file ──
+    @bottle_app.get("/api/open")
+    def api_open_launch():
+        """GET: Load the company from the launch file (set when app launched with a file arg)."""
+        try:
+            info_path = os.path.join(_this_dir, "data", "launch_file.json")
+            if not os.path.isfile(info_path):
+                return json_ok({"ok": False})
+            with open(info_path, "r") as f:
+                launch = json.load(f)
+            path = launch.get("path", "")
+            if not path or not os.path.isfile(path):
+                return json_ok({"ok": False})
+            directory = os.path.dirname(path)
+            c = Company.load(directory)
+            return json_ok({
+                "ok": True,
+                "data": {
+                    "company": c.to_dict(),
+                    "filepath": path,
+                    "filename": c.filename,
+                    "directory": directory,
+                }
+            })
+        except Exception as e:
+            return json_err(str(e))
+
+    # ── Open a .comp file (POST with path) ──
     @bottle_app.post("/api/open")
     def api_open():
         """Load a .comp file and return its data."""
