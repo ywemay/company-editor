@@ -342,10 +342,16 @@ async function handleOpenFile() {
 }
 
 async function handleCreateNew() {
-    // Simply ask for a directory and create a new blank company there
-    var dir = prompt('Enter the directory path where the .comp file should be created:');
-    if (!dir || !dir.trim()) return;
-    dir = dir.trim();
+    // Open a directory picker, then create a new blank company there
+    var result;
+    try {
+        result = await api.browseDir();
+    } catch (err) {
+        _showAlert('Error selecting directory: ' + err.message);
+        return;
+    }
+    var dir = result && result.path ? result.path : '';
+    if (!dir) return;
     try {
         var blank = {
             name: '', address: '', website: '', company_type: '',

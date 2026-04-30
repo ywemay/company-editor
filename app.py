@@ -136,6 +136,19 @@ if bottle is not None:
         except Exception as e:
             return json_err(str(e))
 
+    # ── Browse for directory ──
+    @bottle_app.get("/api/browse-directory")
+    def api_browse_directory():
+        """Open a native directory picker."""
+        try:
+            result = webview.windows[0].create_file_dialog(
+                webview.FileDialog.FOLDER
+            )
+            path = result[0] if result else ""
+            return json_ok({"path": path})
+        except Exception as e:
+            return json_err(str(e))
+
     # ── Open URI with system handler ──
     @bottle_app.get("/api/open-system")
     def api_open_system():
