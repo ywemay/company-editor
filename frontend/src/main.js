@@ -296,6 +296,8 @@ function bindEvents() {
     // Start page buttons
     document.getElementById('btn-open-file').addEventListener('click', handleOpenFile);
     document.getElementById('btn-create-new').addEventListener('click', handleCreateNew);
+    var debugBtn = document.getElementById('btn-debug-load');
+    if (debugBtn) debugBtn.addEventListener('click', handleDebugLoad);
 
     // Editor toolbar buttons
     document.getElementById('btn-close-file').addEventListener('click', handleCloseFile);
@@ -343,6 +345,26 @@ async function handleOpenFile() {
         }
     } catch (err) {
         _showAlert('Error selecting file: ' + err.message);
+    }
+}
+
+async function handleDebugLoad() {
+    // Force-load the launch file (debug button on start page)
+    try {
+        var result = await fetch('/api/open').then(function(r) { return r.json(); });
+        if (result.ok && result.data && result.data.company) {
+            var d = result.data;
+            appState.company = d.company;
+            appState.directory = d.directory;
+            appState.filename = d.filename;
+            appState.filepath = d.filepath;
+            appState.modified = false;
+            render();
+        } else {
+            _showAlert('No launch data found: ' + JSON.stringify(result));
+        }
+    } catch (err) {
+        _showAlert('Error: ' + err.message);
     }
 }
 
