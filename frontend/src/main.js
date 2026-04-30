@@ -309,8 +309,12 @@ function bindEvents() {
     // Input change marks modified
     body.addEventListener('input', function(e) {
         if (e.target.closest('#editor-content') && !e.target.closest('#contact-editor')) {
-            appState.modified = true;
-            render();
+            if (!appState.modified) {
+                appState.modified = true;
+                // Just update the modified badge without re-rendering the whole form
+                var badge = document.getElementById('editor-modified');
+                if (badge) badge.style.display = '';
+            }
         }
     });
 
