@@ -110,13 +110,10 @@ if bottle is not None:
                         log(f"Fallback ERROR: {e}")
                         raise
                     return json_ok({
-                        "ok": True,
-                        "data": {
-                            "company": c.to_dict(),
-                            "filepath": path,
-                            "filename": c.filename,
-                            "directory": directory,
-                        }
+                        "company": c.to_dict(),
+                        "filepath": path,
+                        "filename": c.filename,
+                        "directory": directory,
                     })
             return json_ok({"ok": False})
         except Exception as e:

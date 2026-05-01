@@ -1,0 +1,11 @@
+Launch file written to /home/dorian/.local/share/company-editor/launch_file.json
+Checking launch file at: /home/dorian/.local/share/company-editor/launch_file.json
+Launch file content: path=/home/dorian/Documents/Products/manya-doo.comp
+Fallback: file exists at /home/dorian/Documents/Products/manya-doo.comp
+Fallback: Company loaded: Manya Doo
+Fallback: to_dict OK, keys=['name', 'address', 'website', 'company_type', 'emails', 'phones', 'contacts', 'contactCount', 'filename']
+Checking launch file at: /home/dorian/.local/share/company-editor/launch_file.json
+Launch file content: path=/home/dorian/Documents/Products/manya-doo.comp
+Fallback: file exists at /home/dorian/Documents/Products/manya-doo.comp
+Fallback: Company loaded: Manya Doo
+Fallback: to_dict OK, keys=['name', 'address', 'website', 'company_type', 'emails', 'phones', 'contacts', 'contactCount', 'filename']
